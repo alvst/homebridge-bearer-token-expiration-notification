@@ -20,6 +20,7 @@ function MotionSwitchAccessory(log, config) {
   this.bearerToken = config['bearerToken'];
   this.switchState = false;
   this.motionSensorState = false;
+  this.debug = config['debug'] || false;
 
   this.motionSensorService = new Service.MotionSensor(this.motionSensorName);
   this.motionSensorService
@@ -33,130 +34,115 @@ function MotionSwitchAccessory(log, config) {
     .on('set', this.setSwitchState.bind(this));
 }
 
-MotionSwitchAccessory.prototype.getMotionSensorState = function (callback) {
-  callback(null, this.motionSensorState);
-};
+MotionSwitchAccessory.prototype = {
+  identify: function (callback) {
+    this.log('Identify requested!');
+    callback();
+  },
 
-MotionSwitchAccessory.prototype.getSwitchState = function (callback) {
-  callback(null, this.switchState);
-  // once the callback is sent, start checking for changes
-  // When change is seen, setSwitchState is called
-  this.checkChanges();
-};
+  getMotionSensorState: function (callback) {
+    callback(null, this.motionSensorState);
+  },
 
-MotionSwitchAccessory.prototype.checkChanges = function (state, callback) {
-  // setTimeout(this.server, 10000, this);
-  console.log('Checking for changes');
-  console.log(this.bearerToken);
-  console.log(this.homebridgeCustomPort);
-  new Promise((resolve, reject) => {
-    request(
-      {
-        url: `http://localhost:8581/api/auth/check`,
-        method: 'GET',
-        headers: {
-          accept: '*/*',
-          Authorization: `Bearer ${this.bearerToken}`,
-          'Content-Type': 'application/json',
-        },
-        json: {
-          characteristicType: 'On',
-          value: true,
-        },
-      },
-      (error, response, body) => {
-        if (error) {
-          console.log(error);
-          reject(error);
-        } else {
-          console.log(body);
-          resolve(response);
-        }
-      }
-    );
-  }).then((resolve) => {
-    // console.log(resolve);
-    console.log(resolve.statusCode);
-    if (resolve.statusCode === 200) {
-      setTimeout(this.checkChanges(), 10000, this);
+  getSwitchState: function (callback) {
+    callback(null, this.switchState);
+    this.checkChanges();
+  },
+
+  debugLog(message) {
+    if (this.debug) {
+      this.log.warn(`[DEBUG] ${message}`);
     }
-    if (resolve.statusCode === 401) {
-      // TBD
-    }
-  });
-};
+  },
 
-MotionSwitchAccessory.prototype.setSwitchState = function (state, callback) {
-  this.server();
+  checkChanges: function () {
+    this.log('Checking for changes');
 
-  this.switchState = state;
-  console.log('Switch state: ' + this.switchState);
-  // When we turn this on, we also want to turn on the motion sensor
-  this.trigger();
-  callback(null);
-};
-
-MotionSwitchAccessory.prototype.trigger = function () {
-  if (this.switchState) {
-    this.motionSensorState = 1;
     this.motionSensorService.setCharacteristic(
       Characteristic.MotionDetected,
-      Boolean(this.motionSensorState)
+      Boolean(false)
     );
-    // setTimeout(this.resetSensors, 1000, this);
-  } else {
-    console.log('Switch state: ' + this.switchState);
-    // this.resetSensors;
-    setTimeout(this.resetSensors, 1000, this);
-  }
-};
+    this.switchService.setCharacteristic(Characteristic.On, Boolean(false));
 
-MotionSwitchAccessory.prototype.server = async function () {
-  new Promise((resolve, reject) => {
-    request(
-      {
-        url: `http://localhost:${this.homebridgeCustomPort}/api/auth/check`,
-        method: 'GET',
-        headers: {
-          accept: '*/*',
-          Authorization: `Bearer ${this.bearerToken}`,
-          'Content-Type': 'application/json',
+    new Promise((resolve, reject) => {
+      request(
+        {
+          url: `http://localhost:${this.homebridgeCustomPort}/api/auth/check`,
+          method: 'GET',
+          headers: {
+            accept: '*/*',
+            Authorization: `Bearer ${this.bearerToken}`,
+            'Content-Type': 'application/json',
+          },
+          json: {
+            characteristicType: 'On',
+            value: true,
+          },
         },
-        json: {
-          characteristicType: 'On',
-          value: true,
-        },
-      },
-      (error, response, body) => {
-        if (error) {
-          console.log(error);
-          reject(error);
-        } else {
-          console.log(body);
-          resolve(response);
+        (error, response, body) => {
+          if (error) {
+            this.log(error);
+            reject(error);
+          } else {
+            this.log(body);
+            resolve(response);
+          }
         }
+      );
+    }).then((resolve) => {
+      this.debugLog(`Response Status Code: ${resolve.statusCode}`);
+      if (resolve.statusCode === 200) {
+        this.log(`Token is still valid. Will check again in 5 minutes`);
+        setTimeout(this.checkChanges.bind(this), 300000, this);
       }
+      if (resolve.statusCode === 400 || resolve.statusCode === 401) {
+        this.motionSensorService.setCharacteristic(
+          Characteristic.MotionDetected,
+          Boolean(true)
+        );
+        this.debugLog(
+          `Motion sensor state: ${
+            this.motionSensorService.getCharacteristic(
+              Characteristic.MotionDetected
+            ).value
+          }`
+        );
+        this.switchService.setCharacteristic(Characteristic.On, Boolean(true));
+        this.debugLog(
+          `Switch sensor state: ${
+            this.switchService.getCharacteristic(Characteristic.On).value
+          }`
+        );
+
+        this.log(
+          'Token expired. Please update your token in config.json and restart Homebridge'
+        );
+        this.log(`Remind again in 12 hours`);
+        setTimeout(this.checkChanges.bind(this), 43200000, this);
+        // setTimeout(this.checkChanges.bind(this), 10000, this);
+      }
+    });
+  },
+
+  setSwitchState: function (state, callback) {
+    callback(null);
+  },
+
+  resetSensors: function (self) {
+    // self.switchState = 0;
+
+    self.motionSensorState = 0;
+    // self.switchService.setCharacteristic(
+    //   Characteristic.On,
+    //   Boolean(self.switchState)
+    // );
+    self.motionSensorService.setCharacteristic(
+      Characteristic.MotionDetected,
+      Boolean(self.motionSensorState)
     );
-  }).then((resolve) => {
-    console.log(resolve);
-    console.log(resolve.statusCode);
-  });
-};
+  },
 
-MotionSwitchAccessory.prototype.resetSensors = function (self) {
-  // self.switchState = 0;
-
-  self.motionSensorState = 0;
-  // self.switchService.setCharacteristic(
-  //   Characteristic.On,
-  //   Boolean(self.switchState)
-  // );
-  self.motionSensorService.setCharacteristic(
-    Characteristic.MotionDetected,
-    Boolean(self.motionSensorState)
-  );
-};
-
-MotionSwitchAccessory.prototype.getServices = function () {
-  return [this.motionSensorService, this.switchService];
+  getServices: function () {
+    return [this.motionSensorService, this.switchService];
+  },
 };
