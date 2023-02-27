@@ -56,8 +56,6 @@ MotionSwitchAccessory.prototype = {
   },
 
   checkChanges: function () {
-    this.log('Checking for changes');
-
     this.motionSensorService.setCharacteristic(
       Characteristic.MotionDetected,
       Boolean(false)
@@ -84,7 +82,7 @@ MotionSwitchAccessory.prototype = {
             this.log(error);
             reject(error);
           } else {
-            this.log(body);
+            // this.log(body);
             resolve(response);
           }
         }
@@ -92,7 +90,8 @@ MotionSwitchAccessory.prototype = {
     }).then((resolve) => {
       this.debugLog(`Response Status Code: ${resolve.statusCode}`);
       if (resolve.statusCode === 200) {
-        this.log(`Token is still valid. Will check again in 5 minutes`);
+        this.debugLog(`Token is still valid. Will check again in 5 minutes`);
+        // this.log(`Token is still valid. Will check again in 5 minutes`);
         setTimeout(this.checkChanges.bind(this), 300000, this);
       }
       if (resolve.statusCode === 400 || resolve.statusCode === 401) {
@@ -117,9 +116,8 @@ MotionSwitchAccessory.prototype = {
         this.log(
           'Token expired. Please update your token in config.json and restart Homebridge'
         );
-        this.log(`Remind again in 12 hours`);
+        this.log(`Next reminder in 12 hours`);
         setTimeout(this.checkChanges.bind(this), 43200000, this);
-        // setTimeout(this.checkChanges.bind(this), 10000, this);
       }
     });
   },
