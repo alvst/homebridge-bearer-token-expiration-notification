@@ -18,6 +18,8 @@ function MotionSwitchAccessory(log, config) {
   this.switchName = config['switch_name'];
   this.homebridgeCustomPort = config['homebridge_custom_port'] || 8581;
   this.bearerToken = config['bearerToken'];
+  this.checkInterval = config['check_interval'] || 300000;
+  this.checkIntervalFailed = config['check_interval_failed'] || 43200000;
   this.switchState = false;
   this.motionSensorState = false;
   this.debug = config['debug'] || false;
@@ -90,11 +92,17 @@ MotionSwitchAccessory.prototype = {
     }).then((resolve) => {
       this.debugLog(`Response Status Code: ${resolve.statusCode}`);
       if (resolve.statusCode === 200) {
-        this.debugLog(`Token is still valid. Will check again in 5 minutes`);
+        this.debugLog(
+          `Token is still valid. Will check again in ${msToTime(
+            this.checkInterval
+          )}`
+        );
+        setTimeout(this.checkChanges.bind(this), this.checkInterval, this);
         // this.log(`Token is still valid. Will check again in 5 minutes`);
-        setTimeout(this.checkChanges.bind(this), 300000, this);
+        // setTimeout(this.checkChanges.bind(this), this.check_interval, this);
       }
       if (resolve.statusCode === 400 || resolve.statusCode === 401) {
+        this.debugLog(`Token expired. ${resolve.statusCode} returned`);
         this.motionSensorService.setCharacteristic(
           Characteristic.MotionDetected,
           Boolean(true)
@@ -116,10 +124,46 @@ MotionSwitchAccessory.prototype = {
         this.log(
           'Token expired. Please update your token in config.json and restart Homebridge'
         );
-        this.log(`Next reminder in 12 hours`);
-        setTimeout(this.checkChanges.bind(this), 43200000, this);
+        this.log(
+          'Please make sure to update the config.json for this plugin and any other plugins that require it. You can use the same token for all plugins requiring one.'
+        );
+        this.log(`Next reminder in ${msToTime(this.checkIntervalFailed)}`);
+        setTimeout(
+          this.checkChanges.bind(this),
+          this.checkIntervalFailed,
+          this
+        );
       }
     });
+
+    function msToTime(duration) {
+      // var milliseconds = Math.floor((duration % 1000) / 100),
+      //   seconds = Math.floor((duration / 1000) % 60),
+      //   minutes = Math.floor((duration / (1000 * 60)) % 60),
+      //   hours = Math.floor((duration / (1000 * 60 * 60)) % 24);
+
+      // hours = hours < 10 ? '0' + hours : hours;
+      // minutes = minutes < 10 ? '0' + minutes : minutes;
+      // seconds = seconds < 10 ? '0' + seconds : seconds;
+
+      // return hours + ':' + minutes + ':' + seconds + '.' + milliseconds;
+      var seconds = (duration / 1000).toFixed(0);
+      var minutes = Math.floor(seconds / 60);
+      var hours = '';
+      if (minutes > 59) {
+        hours = Math.floor(minutes / 60);
+        hours = hours >= 10 ? hours : '0' + hours;
+        minutes = minutes - hours * 60;
+        minutes = minutes >= 10 ? minutes : '0' + minutes;
+      }
+
+      seconds = Math.floor(seconds % 60);
+      seconds = seconds >= 10 ? seconds : '0' + seconds;
+      if (hours != '') {
+        return hours + ':' + minutes + ':' + seconds;
+      }
+      return minutes + ':' + seconds;
+    }
   },
 
   setSwitchState: function (state, callback) {
