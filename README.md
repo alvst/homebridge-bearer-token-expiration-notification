@@ -1,20 +1,35 @@
 ## Homebridge Motion Switch
 
-Can be used to trigger a motion detected event when a switch is turned on, via Siri for example, similar to https://twitter.com/viticci/status/961751917973180417 but within HomeKit only.
-
 #### Setup
 
-`npm install -g homebridge-motion-switch`
+`npm install -g alvst/homebridge-bearer-token-expiration-notification`
 
-And add the following to the accessories list in your Homebridge config. Change names as you wish.
+And add the following to the accessories list in your Homebridge config. I recommend the name "!! \"Your Bearer Token Has expired\" !!" As the notification will then read Motion detected !! \"Your Bearer Token Has expired\" !!.
 
+```json
+    "accessories": [
+      {
+          "accessory": "Motion Switch",
+          "motion_sensor_name": "Motion Sensor",
+          "switch_name": "Motion Switch",
+          "name": "!! \"Your Bearer Token Has expired\" !!",
+          "bearerToken": "",
+      }
+    ]
 ```
-{
-  "accessory": "Motion Switch",
-  "motion_sensor_name": "Motion Sensor",
-  "switch_name": "Motion Switch",
-  "name": "Motion Switch"
-}
-```
 
-Then add it to HomeKit, once added, you will need to turn on Notifications for the motion sensor you just added.
+Then add it to HomeKit, once added, you will need to turn on Notifications (Home.app → Home Settings → Sensors → [Sensor Name] → Activity notifications). Once the Bearer Token Expires, you will be notified the token has expired with a notification.
+
+## Required fields
+
+| Key           | Description                                       | Required |
+| ------------- | ------------------------------------------------- | -------- |
+| `bearerToken` | Bearer authentication Token for you want to check | `Yes`    |
+
+## Optional Fields
+
+| Key                     | Description                                                                                                                                                                       | Default    | Units        | Other Info                  |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------ | --------------------------- |
+| `check_interval`        | When the the token is valid, this is the interval at which it will check again                                                                                                    | `300000`   | Milliseconds | Equivalent to 5 minutes     |
+| `check_interval_failed` | When the the token is Invalid, this is the interval at which it will check again. I recommend making this longer as the notification will be repeated until you update your token | `43200000` | Milliseconds | Equivalent to 12 hours      |
+| `debug`                 | Add additional logs useful for debugging to your homebridge console                                                                                                               | `false`    | Boolean      | Mainly useful for debugging |
