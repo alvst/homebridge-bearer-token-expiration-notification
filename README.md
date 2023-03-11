@@ -18,7 +18,7 @@ And add the following to the accessories list in your Homebridge config. I recom
     ]
 ```
 
-Then add it to HomeKit, once added, you will need to turn on Notifications (Home.app → Home Settings → Sensors → [Sensor Name] → Activity notifications). Once the Bearer Token Expires, you will be notified the token has expired with a notification.
+Then add it to HomeKit, once added, you will need to turn on Notifications for the sensor (Home.app → Home Settings → Sensors → [Sensor Name] → Activity notifications). Once the Bearer Token Expires, you will be notified the token has expired with a notification.
 
 ## Required fields
 
@@ -33,3 +33,7 @@ Then add it to HomeKit, once added, you will need to turn on Notifications (Home
 | `check_interval`        | When the the token is valid, this is the interval at which it will check again                                                                                                    | `300000`   | Milliseconds | Equivalent to 5 minutes     |
 | `check_interval_failed` | When the the token is Invalid, this is the interval at which it will check again. I recommend making this longer as the notification will be repeated until you update your token | `43200000` | Milliseconds | Equivalent to 12 hours      |
 | `debug`                 | Add additional logs useful for debugging to your homebridge console                                                                                                               | `false`    | Boolean      | Mainly useful for debugging |
+
+## Acknowledgements
+
+This repo was originally a fork from [aaronpearce/homebridge-motion-switch](https://github.com/aaronpearce/homebridge-motion-switch).
