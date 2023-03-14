@@ -21,6 +21,7 @@ function MotionSwitchAccessory(log, config) {
   this.checkInterval = config['check_interval'] || 300000;
   this.checkIntervalFailed = config['check_interval_failed'] || 43200000;
   this.switchState = false;
+  this.motionSensorState = false;
   this.debug = config['debug'] || false;
 
   this.motionSensorService = new Service.MotionSensor(this.motionSensorName);
@@ -42,7 +43,7 @@ MotionSwitchAccessory.prototype = {
   },
 
   getMotionSensorState: function (callback) {
-    callback(null, false);
+    callback(null, this.motionSensorState);
   },
 
   getSwitchState: function (callback) {
