@@ -58,6 +58,7 @@ MotionSwitchAccessory.prototype = {
   },
 
   checkChanges: function () {
+    console.log('starting');
     this.motionSensorService.setCharacteristic(
       Characteristic.MotionDetected,
       Boolean(false)
@@ -90,6 +91,7 @@ MotionSwitchAccessory.prototype = {
         }
       );
     }).then((resolve) => {
+      console.log('here');
       this.debugLog(`Response Status Code: ${resolve.statusCode}`);
       if (resolve.statusCode === 200) {
         this.debugLog(
@@ -97,7 +99,7 @@ MotionSwitchAccessory.prototype = {
             this.checkInterval
           )}`
         );
-        setTimeout(this.checkChanges.bind(this), this.checkInterval, this);
+        setTimeout(this.checkChanges.bind(this), this.checkInterval);
         return;
       }
       if (resolve.statusCode === 400 || resolve.statusCode === 401) {
@@ -130,15 +132,11 @@ MotionSwitchAccessory.prototype = {
           `Next reminder in ${msToTime(this.checkIntervalFailed)}`
         );
 
-        setTimeout(
-          this.checkChanges.bind(this),
-          this.checkIntervalFailed,
-          this
-        );
+        setTimeout(this.checkChanges.bind(this), this.checkIntervalFailed);
         return;
       }
       this.log.error('Token is expired or invalid. Please update your token.');
-      setTimeout(this.checkChanges.bind(this), this.checkIntervalFailed, this);
+      setTimeout(this.checkChanges.bind(this), this.checkIntervalFailed);
       return;
     });
 
