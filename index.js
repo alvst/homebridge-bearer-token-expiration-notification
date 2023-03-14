@@ -98,8 +98,6 @@ MotionSwitchAccessory.prototype = {
           )}`
         );
         setTimeout(this.checkChanges.bind(this), this.checkInterval, this);
-        // this.log(`Token is still valid. Will check again in 5 minutes`);
-        // setTimeout(this.checkChanges.bind(this), this.check_interval, this);
       }
       if (resolve.statusCode === 400 || resolve.statusCode === 401) {
         this.debugLog(`Token expired. ${resolve.statusCode} returned`);
@@ -137,16 +135,6 @@ MotionSwitchAccessory.prototype = {
     });
 
     function msToTime(duration) {
-      // var milliseconds = Math.floor((duration % 1000) / 100),
-      //   seconds = Math.floor((duration / 1000) % 60),
-      //   minutes = Math.floor((duration / (1000 * 60)) % 60),
-      //   hours = Math.floor((duration / (1000 * 60 * 60)) % 24);
-
-      // hours = hours < 10 ? '0' + hours : hours;
-      // minutes = minutes < 10 ? '0' + minutes : minutes;
-      // seconds = seconds < 10 ? '0' + seconds : seconds;
-
-      // return hours + ':' + minutes + ':' + seconds + '.' + milliseconds;
       var seconds = (duration / 1000).toFixed(0);
       var minutes = Math.floor(seconds / 60);
       var hours = '';
@@ -168,20 +156,6 @@ MotionSwitchAccessory.prototype = {
 
   setSwitchState: function (state, callback) {
     callback(null);
-  },
-
-  resetSensors: function (self) {
-    // self.switchState = 0;
-
-    self.motionSensorState = 0;
-    // self.switchService.setCharacteristic(
-    //   Characteristic.On,
-    //   Boolean(self.switchState)
-    // );
-    self.motionSensorService.setCharacteristic(
-      Characteristic.MotionDetected,
-      Boolean(self.motionSensorState)
-    );
   },
 
   getServices: function () {
