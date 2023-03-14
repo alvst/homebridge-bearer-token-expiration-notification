@@ -98,6 +98,7 @@ MotionSwitchAccessory.prototype = {
           )}`
         );
         setTimeout(this.checkChanges.bind(this), this.checkInterval, this);
+        return;
       }
       if (resolve.statusCode === 400 || resolve.statusCode === 401) {
         this.debugLog(`Token expired. ${resolve.statusCode} returned`);
@@ -134,16 +135,11 @@ MotionSwitchAccessory.prototype = {
           this.checkIntervalFailed,
           this
         );
-      } else {
-        this.log.error(
-          'Token is expired or invalid. Please update your token.'
-        );
-        setTimeout(
-          this.checkChanges.bind(this),
-          this.checkIntervalFailed,
-          this
-        );
+        return;
       }
+      this.log.error('Token is expired or invalid. Please update your token.');
+      setTimeout(this.checkChanges.bind(this), this.checkIntervalFailed, this);
+      return;
     });
 
     function msToTime(duration) {
