@@ -119,17 +119,23 @@ MotionSwitchAccessory.prototype = {
           }`
         );
 
-        this.log(
+        this.log.error(
           'Token expired. Please update your token in config.json and restart Homebridge'
         );
-        this.log(
+        this.log.error(
           'Please make sure to update the config.json for this plugin and any other plugins that require it. You can use the same token for all plugins requiring one.'
         );
-        this.log(`Next reminder in ${msToTime(this.checkIntervalFailed)}`);
+        this.log.error(
+          `Next reminder in ${msToTime(this.checkIntervalFailed)}`
+        );
         setTimeout(
           this.checkChanges.bind(this),
           this.checkIntervalFailed,
           this
+        );
+      } else {
+        this.log.error(
+          'Token is expired or invalid. Please update your token.'
         );
       }
     });
