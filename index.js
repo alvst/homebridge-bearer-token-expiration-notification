@@ -21,7 +21,6 @@ function MotionSwitchAccessory(log, config) {
   this.checkInterval = config['check_interval'] || 300000;
   this.checkIntervalFailed = config['check_interval_failed'] || 43200000;
   this.switchState = false;
-  this.motionSensorState = false;
   this.debug = config['debug'] || false;
 
   this.motionSensorService = new Service.MotionSensor(this.motionSensorName);
@@ -43,7 +42,7 @@ MotionSwitchAccessory.prototype = {
   },
 
   getMotionSensorState: function (callback) {
-    callback(null, this.motionSensorState);
+    callback(null, false);
   },
 
   getSwitchState: function (callback) {
@@ -128,6 +127,7 @@ MotionSwitchAccessory.prototype = {
         this.log.error(
           `Next reminder in ${msToTime(this.checkIntervalFailed)}`
         );
+
         setTimeout(
           this.checkChanges.bind(this),
           this.checkIntervalFailed,
@@ -136,6 +136,11 @@ MotionSwitchAccessory.prototype = {
       } else {
         this.log.error(
           'Token is expired or invalid. Please update your token.'
+        );
+        setTimeout(
+          this.checkChanges.bind(this),
+          this.checkIntervalFailed,
+          this
         );
       }
     });

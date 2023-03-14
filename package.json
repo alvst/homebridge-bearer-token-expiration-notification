@@ -1,17 +1,20 @@
 {
-  "name": "homebridge-motion-switch",
+  "name": "homebridge-bearer-token-expiration-notification",
   "version": "1.0.0",
   "description": "Motion Switch plugin for homebridge: https://github.com/nfarina/homebridge",
   "license": "ISC",
   "keywords": [
-    "homebridge-plugin"
+    "homebridge-plugin",
+    "homebridge",
+    "bearer-alerts",
+    "bearer-expiration-alert"
   ],
   "repository": {
     "type": "git",
-    "url": "git://github.com/aaronpearce/homebridge-motion-switch.git"
+    "url": "git://github.com/aaronpearce/homebridge-bearer-token-expiration-notification.git"
   },
   "bugs": {
-    "url": "http://github.com/aaronpearce/homebridge-motion-switch/issues"
+    "url": "http://github.com/aaronpearce/homebridge-bearer-token-expiration-notification/issues"
   },
   "engines": {
     "node": ">=0.12.0",
