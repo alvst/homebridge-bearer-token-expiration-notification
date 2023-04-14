@@ -58,11 +58,17 @@ MotionSwitchAccessory.prototype = {
     }
   },
 
+  errorLog(message) {
+    this.log.error(`[Error] ${message}`);
+  },
+
   checkChanges: function () {
+    // If duplication persists try https://developer.mozilla.org/en-US/docs/Web/API/clearTimeout
+    // https://github.com/ecoen66/homebridge-dummy-contact/blob/master/index.js
     if (!this.checkInProgress) {
-      console.log('checkInProgress: ' + this.checkInProgress);
+      this.log('checkInProgress: ' + this.checkInProgress);
       this.checkInProgress = true;
-      console.log('starting');
+      this.log('starting');
       this.motionSensorService.setCharacteristic(
         Characteristic.MotionDetected,
         Boolean(false)
@@ -91,6 +97,14 @@ MotionSwitchAccessory.prototype = {
             this.debugLog(`Response Status Code: ${response.statusCode}`);
             if (response.statusCode === 200) {
               this.debugLog(
+                `Motion sensor state: ${
+                  this.motionSensorService.getCharacteristic(
+                    Characteristic.MotionDetected
+                  ).value
+                }`
+              );
+
+              this.debugLog(
                 `Token is still valid. Will check again in ${this.msToTime(
                   this.checkInterval
                 )}`
@@ -107,8 +121,8 @@ MotionSwitchAccessory.prototype = {
                 Characteristic.MotionDetected,
                 Boolean(true)
               );
-              this.debugLog(
-                `Motion sensor state: ${
+              this.errorLog(
+                `Token Expired. Motion sensor set to ${
                   this.motionSensorService.getCharacteristic(
                     Characteristic.MotionDetected
                   ).value
@@ -155,118 +169,6 @@ MotionSwitchAccessory.prototype = {
     }
   },
 
-  // checkChanges: function () {
-  //   if (!this.checkInProgress) {
-  //     console.log('checkInProgress: ' + this.checkInProgress);
-  //     this.checkInProgress = true;
-  //     console.log('starting');
-  //     this.motionSensorService.setCharacteristic(
-  //       Characteristic.MotionDetected,
-  //       Boolean(false)
-  //     );
-  //     this.switchService.setCharacteristic(Characteristic.On, Boolean(false));
-
-  //     const doCheck = () => {
-  //       return new Promise((resolve, reject) => {
-  //         request(
-  //           {
-  //             url: `http://localhost:${this.homebridgeCustomPort}/api/auth/check`,
-  //             method: 'GET',
-  //             headers: {
-  //               accept: '*/*',
-  //               Authorization: `Bearer ${this.bearerToken}`,
-  //               'Content-Type': 'application/json',
-  //             },
-  //             json: {
-  //               characteristicType: 'On',
-  //               value: true,
-  //             },
-  //           },
-  //           (error, response, body) => {
-  //             if (error) {
-  //               this.log(error);
-  //               reject(error);
-  //             } else {
-  //               // this.log(body);
-  //               resolve(response);
-  //             }
-  //           }
-  //         );
-  //       });
-  //     };
-
-  //     const checkAndScheduleNext = () => {
-  //       doCheck()
-  //         .then((resolve) => {
-  //           console.log('here');
-  //           this.debugLog(`Response Status Code: ${resolve.statusCode}`);
-  //           if (resolve.statusCode === 200) {
-  //             this.debugLog(
-  //               `Token is still valid. Will check again in ${this.msToTime(
-  //                 this.checkInterval
-  //               )}`
-  //             );
-  //             setTimeout(checkAndScheduleNext, this.checkInterval);
-  //           } else if (
-  //             resolve.statusCode === 400 ||
-  //             resolve.statusCode === 401
-  //           ) {
-  //             this.debugLog(`Token expired. ${resolve.statusCode} returned`);
-  //             this.motionSensorService.setCharacteristic(
-  //               Characteristic.MotionDetected,
-  //               Boolean(true)
-  //             );
-  //             this.debugLog(
-  //               `Motion sensor state: ${
-  //                 this.motionSensorService.getCharacteristic(
-  //                   Characteristic.MotionDetected
-  //                 ).value
-  //               }`
-  //             );
-  //             this.switchService.setCharacteristic(
-  //               Characteristic.On,
-  //               Boolean(true)
-  //             );
-  //             this.debugLog(
-  //               `Switch sensor state: ${
-  //                 this.switchService.getCharacteristic(Characteristic.On).value
-  //               }`
-  //             );
-
-  //             this.log.error(
-  //               'Token expired. Please update your token in config.json and restart Homebridge'
-  //             );
-  //             this.log.error(
-  //               'Please make sure to update the config.json for this plugin and any other plugins that require it. You can use the same token for all plugins requiring one.'
-  //             );
-  //             this.log.error(
-  //               `Next reminder in ${this.msToTime(this.checkIntervalFailed)}`
-  //             );
-
-  //             setTimeout(checkAndScheduleNext, this.checkIntervalFailed);
-  //           } else {
-  //             this.log.error(
-  //               'Token is expired or invalid. Please update your token.'
-  //             );
-  //             setTimeout(checkAndScheduleNext, this.checkIntervalFailed);
-  //           }
-  //         })
-  //         .catch((error) => {
-  //           this.log.error(error);
-  //           this.log.error(
-  //             'Token is expired or invalid. Please update your token.'
-  //           );
-  //           setTimeout(checkAndScheduleNext, this.checkIntervalFailed);
-  //         })
-  //         .finally(() => {
-  //           this.checkInProgress = false;
-  //         });
-  //     };
-
-  //     checkAndScheduleNext();
-  //   }
-  // },
-
   msToTime: function (duration) {
     var seconds = (duration / 1000).toFixed(0);
     var minutes = Math.floor(seconds / 60);
@@ -287,122 +189,9 @@ MotionSwitchAccessory.prototype = {
     return minutes + ':' + seconds;
   },
 
-  // checkChanges: function () {
-  //   if (!this.checkInProgress) {
-  //     console.log('checkInProgress: ' + this.checkInProgress);
-  //     this.checkInProgress = true;
-  //     console.log('starting');
-  //     this.motionSensorService.setCharacteristic(
-  //       Characteristic.MotionDetected,
-  //       Boolean(false)
-  //     );
-  //     this.switchService.setCharacteristic(Characteristic.On, Boolean(false));
-
-  //     new Promise((resolve, reject) => {
-  //       request(
-  //         {
-  //           url: `http://localhost:${this.homebridgeCustomPort}/api/auth/check`,
-  //           method: 'GET',
-  //           headers: {
-  //             accept: '*/*',
-  //             Authorization: `Bearer ${this.bearerToken}`,
-  //             'Content-Type': 'application/json',
-  //           },
-  //           json: {
-  //             characteristicType: 'On',
-  //             value: true,
-  //           },
-  //         },
-  //         (error, response, body) => {
-  //           if (error) {
-  //             this.log(error);
-  //             reject(error);
-  //           } else {
-  //             // this.log(body);
-  //             resolve(response);
-  //           }
-  //         }
-  //       );
-  //     }).then((resolve) => {
-  //       this.checkInProgress = false;
-  //       console.log('here');
-  //       this.debugLog(`Response Status Code: ${resolve.statusCode}`);
-  //       if (resolve.statusCode === 200) {
-  //         this.debugLog(
-  //           `Token is still valid. Will check again in ${msToTime(
-  //             this.checkInterval
-  //           )}`
-  //         );
-  //         setTimeout(this.checkChanges.bind(this), this.checkInterval);
-  //         return;
-  //       }
-  //       if (resolve.statusCode === 400 || resolve.statusCode === 401) {
-  //         this.debugLog(`Token expired. ${resolve.statusCode} returned`);
-  //         this.motionSensorService.setCharacteristic(
-  //           Characteristic.MotionDetected,
-  //           Boolean(true)
-  //         );
-  //         this.debugLog(
-  //           `Motion sensor state: ${
-  //             this.motionSensorService.getCharacteristic(
-  //               Characteristic.MotionDetected
-  //             ).value
-  //           }`
-  //         );
-  //         this.switchService.setCharacteristic(
-  //           Characteristic.On,
-  //           Boolean(true)
-  //         );
-  //         this.debugLog(
-  //           `Switch sensor state: ${
-  //             this.switchService.getCharacteristic(Characteristic.On).value
-  //           }`
-  //         );
-
-  //         this.log.error(
-  //           'Token expired. Please update your token in config.json and restart Homebridge'
-  //         );
-  //         this.log.error(
-  //           'Please make sure to update the config.json for this plugin and any other plugins that require it. You can use the same token for all plugins requiring one.'
-  //         );
-  //         this.log.error(
-  //           `Next reminder in ${msToTime(this.checkIntervalFailed)}`
-  //         );
-
-  //         setTimeout(this.checkChanges.bind(this), this.checkIntervalFailed);
-  //         return;
-  //       }
-  //       this.log.error(
-  //         'Token is expired or invalid. Please update your token.'
-  //       );
-  //       setTimeout(this.checkChanges.bind(this), this.checkIntervalFailed);
-  //       return;
-  //     });
-
-  //     function msToTime(duration) {
-  //       var seconds = (duration / 1000).toFixed(0);
-  //       var minutes = Math.floor(seconds / 60);
-  //       var hours = '';
-  //       if (minutes > 59) {
-  //         hours = Math.floor(minutes / 60);
-  //         hours = hours >= 10 ? hours : '0' + hours;
-  //         minutes = minutes - hours * 60;
-  //         minutes = minutes >= 10 ? minutes : '0' + minutes;
-  //       }
-
-  //       seconds = Math.floor(seconds % 60);
-  //       seconds = seconds >= 10 ? seconds : '0' + seconds;
-  //       if (hours != '') {
-  //         return hours + ':' + minutes + ':' + seconds;
-  //       }
-  //       return minutes + ':' + seconds;
-  //     }
-  //   } else {
-  //     console.log('cancel');
-  //   }
-  // },
-
   setSwitchState: function (state, callback) {
+    this.log('setSwitchState: ' + state);
+    this.log('manual on');
     callback(null);
   },
 
