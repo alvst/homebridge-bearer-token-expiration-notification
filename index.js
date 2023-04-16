@@ -22,7 +22,6 @@ function MotionSwitchAccessory(log, config) {
   this.checkIntervalFailed = config['check_interval_failed'] || 43200000;
   this.motionSensorState = false;
   this.debug = config['debug'] || false;
-  this.interval = this.checkIntervalFailed;
   this.processRunning = null;
 
   this.motionSensorService = new Service.MotionSensor(this.motionSensorName);
@@ -126,11 +125,7 @@ MotionSwitchAccessory.prototype.handleTokenExpired = function () {
 };
 
 MotionSwitchAccessory.prototype.resetSensors = function (self) {
-  console.log(
-    self.motionSensorService.getCharacteristic(Characteristic.MotionDetected)
-      .value
-  );
-
+  // Used to ensure Homebridge sees the state change and thus sends the notification
   setTimeout(() => {
     self.motionSensorState = false;
     self.motionSensorService.setCharacteristic(
@@ -149,11 +144,6 @@ MotionSwitchAccessory.prototype.resetSensors = function (self) {
   self.motionSensorService.setCharacteristic(
     Characteristic.MotionDetected,
     Boolean(self.motionSensorState)
-  );
-
-  console.log(
-    self.motionSensorService.getCharacteristic(Characteristic.MotionDetected)
-      .value
   );
 
   self.checkToken();
