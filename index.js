@@ -20,10 +20,8 @@ function MotionSwitchAccessory(log, config) {
   this.bearerToken = config['bearerToken'];
   this.checkInterval = config['check_interval'] || 300000;
   this.checkIntervalFailed = config['check_interval_failed'] || 43200000;
-  this.switchState = false;
   this.motionSensorState = false;
   this.debug = config['debug'] || false;
-  this.checkInProgress = false;
   this.interval = this.checkIntervalFailed;
   this.processRunning = null;
 
@@ -44,25 +42,18 @@ MotionSwitchAccessory.prototype.getMotionSensorState = function (callback) {
 };
 
 MotionSwitchAccessory.prototype.getSwitchState = function (callback) {
-  callback(null, this.switchState);
+  callback(null, false);
   if (this.processRunning === null) {
     this.checkToken();
   }
 };
 
 MotionSwitchAccessory.prototype.setSwitchState = function (state, callback) {
-  this.switchState = state;
   clearTimeout(this.processRunning);
 
   // When we turn this on, we also want to turn on the motion sensor
-  this.trigger();
+  this.checkToken();
   callback(null);
-};
-
-MotionSwitchAccessory.prototype.trigger = function () {
-  if (this.switchState) {
-    this.checkToken();
-  }
 };
 
 MotionSwitchAccessory.prototype.checkToken = function () {
@@ -94,11 +85,8 @@ MotionSwitchAccessory.prototype.checkToken = function () {
   }).then((resolve) => {
     this.debugLog(`Response Status Code: ${resolve.statusCode}`);
     if (resolve.statusCode === 200) {
-      this.checkInProgress = false;
-
       this.scheduleCheckChanges();
-    }
-    if (resolve.statusCode === 400 || resolve.statusCode === 401) {
+    } else if (resolve.statusCode === 400 || resolve.statusCode === 401) {
       this.motionSensorState = true;
       this.motionSensorService.setCharacteristic(
         Characteristic.MotionDetected,
@@ -106,8 +94,15 @@ MotionSwitchAccessory.prototype.checkToken = function () {
       );
 
       this.handleTokenExpired();
+    } else {
+      this.unknownStatusReturned(resolve);
     }
   });
+};
+
+MotionSwitchAccessory.prototype.unknownStatusReturned = function (resolve) {
+  this.errorLog(`Unknown Status Code Returned: ${resolve.statusCode}`);
+  this.handleTokenExpired();
 };
 
 MotionSwitchAccessory.prototype.scheduleCheckChanges = function () {
@@ -131,10 +126,34 @@ MotionSwitchAccessory.prototype.handleTokenExpired = function () {
 };
 
 MotionSwitchAccessory.prototype.resetSensors = function (self) {
-  self.switchService.setCharacteristic(Characteristic.On, false);
+  console.log(
+    self.motionSensorService.getCharacteristic(Characteristic.MotionDetected)
+      .value
+  );
+
+  setTimeout(() => {
+    self.motionSensorState = false;
+    self.motionSensorService.setCharacteristic(
+      Characteristic.MotionDetected,
+      false
+    );
+  }, 1000);
+
+  self.switchState = 0;
+
+  self.motionSensorState = 0;
+  self.switchService.setCharacteristic(
+    Characteristic.On,
+    Boolean(self.switchState)
+  );
   self.motionSensorService.setCharacteristic(
     Characteristic.MotionDetected,
-    false
+    Boolean(self.motionSensorState)
+  );
+
+  console.log(
+    self.motionSensorService.getCharacteristic(Characteristic.MotionDetected)
+      .value
   );
 
   self.checkToken();
