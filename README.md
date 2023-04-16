@@ -22,17 +22,17 @@ Then add it to HomeKit, once added, you will need to turn on Notifications for t
 
 ## Required fields
 
-| Key           | Description                                       | Required |
-| ------------- | ------------------------------------------------- | -------- |
-| `bearerToken` | Bearer authentication Token for you want to check | `Yes`    |
+| Key           | Description                                   | Required |
+| ------------- | --------------------------------------------- | -------- |
+| `bearerToken` | Bearer authentication token you want to check | `Yes`    |
 
 ## Optional Fields
 
-| Key                     | Description                                                                                                                                                                       | Default    | Units        | Other Info                  |
-| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------ | --------------------------- |
-| `check_interval`        | When the the token is valid, this is the interval at which it will check again                                                                                                    | `300000`   | Milliseconds | Equivalent to 5 minutes     |
-| `check_interval_failed` | When the the token is Invalid, this is the interval at which it will check again. I recommend making this longer as the notification will be repeated until you update your token | `43200000` | Milliseconds | Equivalent to 12 hours      |
-| `debug`                 | Add additional logs useful for debugging to your homebridge console                                                                                                               | `false`    | Boolean      | Mainly useful for debugging |
+| Key                     | Description                                                                                                                                                                       | Default    | Units        | Other Info              |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------ | ----------------------- |
+| `check_interval`        | When the the token is valid, this is the interval at which it will check again (I recommend this be more often than the 'check_interval_failed')                                  | `300000`   | Milliseconds | Equivalent to 5 minutes |
+| `check_interval_failed` | When the the token is Invalid, this is the interval at which it will check again. I recommend making this longer as the notification will be repeated until you update your token | `43200000` | Milliseconds | Equivalent to 12 hours  |
+| `debug`                 | Add additional logs useful for debugging to your homebridge console                                                                                                               | `false`    | Boolean      | Useful for debugging    |
 
 ## Acknowledgements
 
