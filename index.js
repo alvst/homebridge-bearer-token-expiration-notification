@@ -42,6 +42,15 @@ MotionSwitchAccessory.prototype.getMotionSensorState = function (callback) {
 
 MotionSwitchAccessory.prototype.getSwitchState = function (callback) {
   callback(null, false);
+
+  setTimeout(() => {
+    this.motionSensorState = false;
+    this.motionSensorService.setCharacteristic(
+      Characteristic.MotionDetected,
+      false
+    );
+  }, 1000);
+
   if (this.processRunning === null) {
     this.checkToken();
   }
