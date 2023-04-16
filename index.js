@@ -20,11 +20,12 @@ function MotionSwitchAccessory(log, config) {
   this.bearerToken = config['bearerToken'];
   this.checkInterval = config['check_interval'] || 300000;
   this.checkIntervalFailed = config['check_interval_failed'] || 43200000;
-  // this.switchState = false;
+  this.switchState = false;
   this.motionSensorState = false;
   this.debug = config['debug'] || false;
   this.checkInProgress = false;
   this.interval = this.checkIntervalFailed;
+  this.processRunning = null;
 
   this.motionSensorService = new Service.MotionSensor(this.motionSensorName);
   this.motionSensorService
@@ -38,150 +39,136 @@ function MotionSwitchAccessory(log, config) {
     .on('set', this.setSwitchState.bind(this));
 }
 
-MotionSwitchAccessory.prototype = {
-  identify: function (callback) {
-    this.log('Identify requested!');
-    callback();
-  },
+MotionSwitchAccessory.prototype.getMotionSensorState = function (callback) {
+  callback(null, this.motionSensorState);
+};
 
-  getMotionSensorState: function (callback) {
-    console.log('getMotionSensorState');
-    callback(null, this.motionSensorState);
-  },
+MotionSwitchAccessory.prototype.getSwitchState = function (callback) {
+  callback(null, this.switchState);
+  if (this.processRunning === null) {
+    this.checkToken();
+  }
+};
 
-  getSwitchState: function (callback) {
-    console.log('getSwitchState');
-    callback(null);
-  },
+MotionSwitchAccessory.prototype.setSwitchState = function (state, callback) {
+  this.switchState = state;
+  clearTimeout(this.processRunning);
 
-  // checkChanges: function () {
-  //   if (!this.checkInProgress) {
-  //     this.checkInProgress = true;
-  //     this.motionSensorService.setCharacteristic(
-  //       Characteristic.MotionDetected,
-  //       Boolean(false)
-  //     );
-  //     this.switchService.setCharacteristic(Characteristic.On, Boolean(false));
+  // When we turn this on, we also want to turn on the motion sensor
+  this.trigger();
+  callback(null);
+};
 
-  //     new Promise((resolve, reject) => {
-  //       request(
-  //         {
-  //           url: `http://localhost:${this.homebridgeCustomPort}/api/auth/check`,
-  //           method: 'GET',
-  //           headers: {
-  //             accept: '*/*',
-  //             Authorization: `Bearer ${this.bearerToken}`,
-  //             'Content-Type': 'application/json',
-  //           },
-  //           json: {
-  //             characteristicType: 'On',
-  //             value: true,
-  //           },
-  //         },
-  //         (error, response, body) => {
-  //           if (error) {
-  //             this.log(error);
-  //             reject(error);
-  //           } else {
-  //             // this.log(body);
-  //             resolve(response);
-  //           }
-  //         }
-  //       );
-  //     }).then((resolve) => {
-  //       console.log('here');
-  //       this.debugLog(`Response Status Code: ${resolve.statusCode}`);
-  //       if (resolve.statusCode === 200) {
-  //         this.checkInProgress = false;
-  //         this.debugLog(
-  //           `Token is still valid. Will check again in ${this.msToTime(
-  //             this.checkInterval
-  //           )}`
-  //         );
-  //         this.scheduleCheckChanges();
-  //       }
-  //       if (resolve.statusCode === 400 || resolve.statusCode === 401) {
-  //         this.handleTokenExpired(resolve);
-  //       }
-  //     });
-  //   }
-  // },
+MotionSwitchAccessory.prototype.trigger = function () {
+  if (this.switchState) {
+    this.checkToken();
+  }
+};
 
-  // handleTokenExpired: function (resolve) {
-  //   console.log('this.handleTokenExpired');
-  //   this.checkInProgress = false;
-  //   this.debugLog(`Token expired. ${resolve.statusCode} returned`);
-  //   this.motionSensorService.setCharacteristic(
-  //     Characteristic.MotionDetected,
-  //     Boolean(true)
-  //   );
-  //   this.debugLog(
-  //     `Motion sensor state: ${
-  //       this.motionSensorService.getCharacteristic(
-  //         Characteristic.MotionDetected
-  //       ).value
-  //     }`
-  //   );
-  //   this.switchService.setCharacteristic(Characteristic.On, Boolean(true));
-  //   this.debugLog(
-  //     `Switch sensor state: ${
-  //       this.switchService.getCharacteristic(Characteristic.On).value
-  //     }`
-  //   );
+MotionSwitchAccessory.prototype.checkToken = function () {
+  new Promise((resolve, reject) => {
+    request(
+      {
+        url: `http://localhost:${this.homebridgeCustomPort}/api/auth/check`,
+        method: 'GET',
+        headers: {
+          accept: '*/*',
+          Authorization: `Bearer ${this.bearerToken}`,
+          'Content-Type': 'application/json',
+        },
+        json: {
+          characteristicType: 'On',
+          value: true,
+        },
+      },
+      (error, response, body) => {
+        if (error) {
+          this.log(error);
+          reject(error);
+        } else {
+          // this.log(body);
+          resolve(response);
+        }
+      }
+    );
+  }).then((resolve) => {
+    this.debugLog(`Response Status Code: ${resolve.statusCode}`);
+    if (resolve.statusCode === 200) {
+      this.checkInProgress = false;
 
-  //   this.log.error(
-  //     'Token expired. Please update your token in config.json and restart Homebridge'
-  //   );
-  //   this.log.error(
-  //     'Please make sure to update the config.json for this plugin and any other plugins that require it. You can use the same token for all plugins requiring one.'
-  //   );
-  //   this.log.error(
-  //     `Next reminder in ${this.msToTime(this.checkIntervalFailed)}`
-  //   );
-
-  //   // this.interval = this.checkIntervalFailed;
-
-  //   return;
-  // },
-
-  scheduleCheckChanges: function () {
-    console.log('Schedule Check Changes');
-  },
-
-  setSwitchState: function (state, callback) {
-    callback(null);
-  },
-
-  msToTime: function (duration) {
-    var seconds = (duration / 1000).toFixed(0);
-    var minutes = Math.floor(seconds / 60);
-    var hours = '';
-    if (minutes > 59) {
-      hours = Math.floor(minutes / 60);
-      hours = hours >= 10 ? hours : '0' + hours;
-      minutes = minutes - hours * 60;
-      minutes = minutes >= 10 ? minutes : '0' + minutes;
+      this.scheduleCheckChanges();
     }
+    if (resolve.statusCode === 400 || resolve.statusCode === 401) {
+      this.motionSensorState = true;
+      this.motionSensorService.setCharacteristic(
+        Characteristic.MotionDetected,
+        true
+      );
 
-    seconds = Math.floor(seconds % 60);
-    seconds = seconds >= 10 ? seconds : '0' + seconds;
-    if (hours != '') {
-      return hours + ':' + minutes + ':' + seconds;
+      this.handleTokenExpired();
     }
-    return minutes + ':' + seconds;
-  },
+  });
+};
 
-  debugLog(message) {
-    if (this.debug) {
-      this.log.warn(`[DEBUG] ${message}`);
-    }
-  },
+MotionSwitchAccessory.prototype.scheduleCheckChanges = function () {
+  this.debugLog(
+    `Token Valid. Will check again in ${this.msToTime(this.checkInterval)}`
+  );
+  this.processRunning = setTimeout(this.resetSensors, this.checkInterval, this);
+};
 
-  errorLog(message) {
-    this.log.error(`[ERROR] ${message}`);
-  },
+MotionSwitchAccessory.prototype.handleTokenExpired = function () {
+  this.errorLog(
+    `Token has expired. Will check again in ${this.msToTime(
+      this.checkIntervalFailed
+    )}`
+  );
+  this.processRunning = setTimeout(
+    this.resetSensors,
+    this.checkIntervalFailed,
+    this
+  );
+};
 
-  getServices: function () {
-    return [this.motionSensorService, this.switchService];
-  },
+MotionSwitchAccessory.prototype.resetSensors = function (self) {
+  self.switchService.setCharacteristic(Characteristic.On, false);
+  self.motionSensorService.setCharacteristic(
+    Characteristic.MotionDetected,
+    false
+  );
+
+  self.checkToken();
+};
+
+MotionSwitchAccessory.prototype.msToTime = function (duration) {
+  var seconds = (duration / 1000).toFixed(0);
+  var minutes = Math.floor(seconds / 60);
+  var hours = '';
+  if (minutes > 59) {
+    hours = Math.floor(minutes / 60);
+    hours = hours >= 10 ? hours : '0' + hours;
+    minutes = minutes - hours * 60;
+    minutes = minutes >= 10 ? minutes : '0' + minutes;
+  }
+
+  seconds = Math.floor(seconds % 60);
+  seconds = seconds >= 10 ? seconds : '0' + seconds;
+  if (hours != '') {
+    return hours + ':' + minutes + ':' + seconds;
+  }
+  return minutes + ':' + seconds;
+};
+
+MotionSwitchAccessory.prototype.debugLog = function (message) {
+  if (this.debug) {
+    this.log.warn(`[DEBUG] ${message}`);
+  }
+};
+
+MotionSwitchAccessory.prototype.errorLog = function (message) {
+  this.log.error(`[ERROR] ${message}`);
+};
+
+MotionSwitchAccessory.prototype.getServices = function () {
+  return [this.motionSensorService, this.switchService];
 };
