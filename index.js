@@ -53,8 +53,7 @@ MotionSwitchAccessory.prototype.getSwitchState = function (callback) {
   }, 1000);
 
   if (this.processRunning === null) {
-    if (allowReset) {
-      this.debugLog('clearTimeout');
+    if (this.allowReset) {
       clearTimeout(this.processRunning);
     }
     this.checkToken();
