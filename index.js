@@ -22,7 +22,7 @@ function MotionSwitchAccessory(log, config) {
   this.checkIntervalFailed = config['check_interval_failed'] || 43200000;
   this.motionSensorState = false;
   this.debug = config['debug'] || false;
-  this.allowReset = config['allow_time_reset'] || false;
+  this.allowReset = config['allow_time_reset'] || true;
   this.processRunning = null;
 
   this.motionSensorService = new Service.MotionSensor(this.motionSensorName);
@@ -53,10 +53,11 @@ MotionSwitchAccessory.prototype.getSwitchState = function (callback) {
   }, 1000);
 
   if (this.processRunning === null) {
-    this.checkToken();
     if (allowReset) {
+      this.debugLog('clearTimeout');
       clearTimeout(this.processRunning);
     }
+    this.checkToken();
   }
 };
 
