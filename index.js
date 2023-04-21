@@ -55,6 +55,7 @@ MotionSwitchAccessory.prototype.getSwitchState = function (callback) {
   if (this.processRunning === null) {
     if (this.allowReset) {
       clearTimeout(this.processRunning);
+      console.log('manual get');
     }
     this.checkToken();
   }
@@ -63,7 +64,8 @@ MotionSwitchAccessory.prototype.getSwitchState = function (callback) {
 MotionSwitchAccessory.prototype.setSwitchState = function (state, callback) {
   clearTimeout(this.processRunning);
 
-  // When we turn this on, we also want to turn on the motion sensor
+  console.log('manual set');
+
   this.checkToken();
   callback(null);
 };
