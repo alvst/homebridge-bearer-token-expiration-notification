@@ -4,7 +4,7 @@
 
 `npm install -g alvst/homebridge-bearer-token-expiration-notification`
 
-And add the following to the accessories list in your Homebridge config. I recommend the name "!! \"Your Bearer Token Has expired\" !!" As the notification will then read Motion detected !! \"Your Bearer Token Has expired\" !!.
+And add the following to the accessories list in your Homebridge config. I recommend the name "**!! \"Your Bearer Token Has expired\" !!**" As the notification will then read "Motion detected !! \"Your Bearer Token Has expired\" !!".
 
 ```json
     "accessories": [
@@ -18,7 +18,7 @@ And add the following to the accessories list in your Homebridge config. I recom
     ]
 ```
 
-Then add it to HomeKit, once added, you will need to turn on Notifications for the sensor (Home.app → Home Settings → Sensors → [Sensor Name] → Activity notifications). Once the Bearer Token Expires, you will be notified the token has expired with a notification.
+Then add it to HomeKit, once added, you will need to turn on Notifications for the sensor (Home.app → Home Settings → Sensors → [Sensor Name] → Activity notifications). Once the Bearer Token Expires, you will be notified the token has expired with a notification. When you add the device to your "Home", you can ignore the errors.
 
 ## Required fields
 
